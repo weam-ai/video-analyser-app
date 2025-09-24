@@ -5,11 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { Video, Upload, Loader2, CheckCircle, AlertCircle, Copy } from 'lucide-react';
+import { Video, Loader2, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface VideoAnalysisResult {
-  fileMetadata: any;
+  fileMetadata: {
+    name: string;
+    state?: { name: string };
+    [key: string]: unknown;
+  };
   summary: string;
   videoUrl: string;
   size: number;
@@ -107,7 +111,8 @@ export default function VideoAnalyzer() {
         fileMetadata: { name: videoType === 'youtube' ? 'YouTube Video' : data.data?.fileMetadata?.name || 'Video' },
         summary: videoType === 'youtube' ? data.summary : data.data?.summary,
         videoUrl: videoUrl,
-        size: videoType === 'youtube' ? 0 : data.data?.size || 0
+        size: videoType === 'youtube' ? 0 : data.data?.size || 0,
+        videoAnalysisId: videoType === 'youtube' ? data.videoAnalysisId : data.data?.videoAnalysisId
       }));
       
       // Automatically redirect to chat page after successful analysis
@@ -168,33 +173,39 @@ export default function VideoAnalyzer() {
             <label htmlFor="videoUrl" className="block text-sm font-medium text-gray-700 mb-2">
               Video URL (Loom or YouTube)
             </label>
-            <Input
-              id="videoUrl"
-              type="url"
-              placeholder="https://www.loom.com/share/your-video-id or https://www.youtube.com/watch?v=..."
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              className="w-full"
-            />
+            <div className="flex gap-3">
+              <Input
+                id="videoUrl"
+                type="url"
+                placeholder="https://www.loom.com/share/your-video-id or https://www.youtube.com/watch?v=..."
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                className="flex-1"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleUpload();
+                  }
+                }}
+              />
+              <Button
+                onClick={handleUpload}
+                disabled={isLoading}
+                className="bg-blue-600 hover:bg-blue-700 px-6"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Video className="mr-2 h-4 w-4" />
+                    Analyze Video
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-          
-          <Button
-            onClick={handleUpload}
-            disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Analyzing Video...
-              </>
-            ) : (
-              <>
-                <Video className="mr-2 h-4 w-4" />
-                Analyze Video
-              </>
-            )}
-          </Button>
         </div>
       </Card>
 
@@ -224,7 +235,7 @@ export default function VideoAnalyzer() {
                 </div>
               )}
               <div>
-                <span className="font-medium">Status:</span> {result.fileMetadata.state.name}
+                <span className="font-medium">Status:</span> {result.fileMetadata.state?.name || 'Analyzed'}
               </div>
             </div>
           </Card>

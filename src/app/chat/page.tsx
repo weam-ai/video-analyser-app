@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -15,10 +15,15 @@ interface ChatMessage {
 }
 
 interface VideoSummary {
-  fileMetadata: any;
+  fileMetadata: {
+    name: string;
+    state?: { name: string };
+    [key: string]: unknown;
+  };
   summary: string;
   videoUrl: string;
   size: number;
+  videoAnalysisId?: string;
 }
 
 export default function ChatPage() {
@@ -27,6 +32,42 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [videoSummary, setVideoSummary] = useState<VideoSummary | null>(null);
   const [fileName, setFileName] = useState<string>('');
+  const [sessionId, setSessionId] = useState<string>('');
+
+  const loadChatMessages = useCallback(async (videoAnalysisId: string) => {
+    try {
+      const response = await fetch(`/api/chat?videoAnalysisId=${videoAnalysisId}`);
+      const data = await response.json();
+      
+      if (response.ok && data.data.messages.length > 0) {
+        // Convert database messages to chat format
+        const chatMessages = data.data.messages.map((msg: { messageId: string; type: 'user' | 'assistant'; content: string; timestamp: string }) => ({
+          id: msg.messageId,
+          type: msg.type,
+          content: msg.content,
+          timestamp: new Date(msg.timestamp)
+        }));
+        setMessages(chatMessages);
+      } else {
+        // Add initial summary message if no existing chat
+        setMessages([{
+          id: '1',
+          type: 'assistant',
+          content: `Here's the video summary:\n\n${videoSummary?.summary}`,
+          timestamp: new Date()
+        }]);
+      }
+    } catch (error) {
+      console.error('Error loading chat messages:', error);
+      // Fallback to initial summary message
+      setMessages([{
+        id: '1',
+        type: 'assistant',
+        content: `Here's the video summary:\n\n${videoSummary?.summary}`,
+        timestamp: new Date()
+      }]);
+    }
+  }, [videoSummary?.summary]);
 
   useEffect(() => {
     // Get video summary from sessionStorage or URL params
@@ -35,19 +76,25 @@ export default function ChatPage() {
       const summary = JSON.parse(storedSummary);
       setVideoSummary(summary);
       setFileName(summary.fileMetadata?.name || '');
+      setSessionId(`session_${Date.now()}`);
       
-      // Add initial summary message
-      setMessages([{
-        id: '1',
-        type: 'assistant',
-        content: `Here's the video summary:\n\n${summary.summary}`,
-        timestamp: new Date()
-      }]);
+      // Load existing chat messages if videoAnalysisId exists
+      if (summary.videoAnalysisId) {
+        loadChatMessages(summary.videoAnalysisId);
+      } else {
+        // Add initial summary message if no existing chat
+        setMessages([{
+          id: '1',
+          type: 'assistant',
+          content: `Here's the video summary:\n\n${summary.summary}`,
+          timestamp: new Date()
+        }]);
+      }
     }
-  }, []);
+  }, [loadChatMessages]);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || !videoSummary) return;
+    if (!inputMessage.trim() || !videoSummary || !videoSummary.videoAnalysisId) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -61,14 +108,18 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/analyze-video', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          message: inputMessage,
+          videoAnalysisId: videoSummary.videoAnalysisId,
+          sessionId: sessionId,
+          videoUrl: videoSummary.videoUrl,
+          videoType: videoSummary.videoUrl.includes('youtube') ? 'youtube' : 'loom',
           fileName: fileName,
-          prompt: inputMessage,
           videoMetadata: videoSummary.fileMetadata
         }),
       });
@@ -79,11 +130,12 @@ export default function ChatPage() {
         throw new Error(data.error || 'Failed to get response');
       }
 
+      // Add both user and assistant messages from the response
       const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
+        id: data.data.assistantMessage.messageId,
         type: 'assistant',
-        content: data.data.analysis,
-        timestamp: new Date()
+        content: data.data.assistantMessage.content,
+        timestamp: new Date(data.data.assistantMessage.timestamp)
       };
 
       setMessages(prev => [...prev, assistantMessage]);

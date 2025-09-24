@@ -1,9 +1,10 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager, FileState } from '@google/generative-ai/server';
+import { ENV_VARS } from '../common/config';
 
 export class GeminiClient {
   private genAI: GoogleGenerativeAI;
-  private model: any;
+  private model: unknown;
   private fileManager: GoogleAIFileManager;
 
   constructor(apiKey: string) {
@@ -12,7 +13,7 @@ export class GeminiClient {
     this.fileManager = new GoogleAIFileManager(apiKey);
   }
 
-  async uploadFile(fileUrl: string): Promise<any> {
+  async uploadFile(fileUrl: string): Promise<unknown> {
     try {
       // Download the video file from Loom
       const response = await fetch(fileUrl);
@@ -61,17 +62,17 @@ export class GeminiClient {
     }
   }
 
-  async analyzeVideo(fileName: string, prompt: string, videoMetadata?: any): Promise<string> {
+  async analyzeVideo(fileName: string, prompt: string, videoMetadata?: unknown): Promise<string> {
     try {
       // Check if we have a valid API key
-      if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'demo-key') {
+      if (!ENV_VARS.GEMINI_API_KEY || ENV_VARS.GEMINI_API_KEY === 'demo-key') {
         throw new Error('Gemini API key not configured');
       }
 
       // Use real Gemini API for analysis
       try {
         // Check if we have a file URI for real video analysis
-        if (videoMetadata?.uri) {
+        if (videoMetadata && typeof videoMetadata === 'object' && 'uri' in videoMetadata) {
           // Use the actual uploaded video file for analysis
           const analysisPrompt = prompt || `Analyze this video and provide a comprehensive summary including:
 1. Main topics discussed
@@ -82,17 +83,17 @@ export class GeminiClient {
 
 Please format the summary in a clear, structured way.`;
 
-          const result = await this.model.generateContent([
+          const result = await (this.model as { generateContent: (content: unknown[]) => Promise<unknown> }).generateContent([
             {
               fileData: {
-                fileUri: videoMetadata.uri,
-                mimeType: videoMetadata.mime_type || 'video/mp4'
+                fileUri: (videoMetadata as { uri: string; mime_type?: string }).uri,
+                mimeType: (videoMetadata as { uri: string; mime_type?: string }).mime_type || 'video/mp4'
               }
             },
             analysisPrompt
           ]);
           
-          const response = await result.response;
+          const response = await (result as { response: { text: () => string } }).response;
           const analysis = response.text();
           
           return `${analysis}
@@ -104,9 +105,9 @@ Please format the summary in a clear, structured way.`;
 
 Video Information:
 - File: ${fileName}
-- Size: ${videoMetadata?.size_bytes ? `${(videoMetadata.size_bytes / (1024 * 1024)).toFixed(2)} MB` : 'Unknown'}
-- Type: ${videoMetadata?.mime_type || 'Video content'}
-- Status: ${videoMetadata?.state?.name || 'Processed'}
+- Size: ${videoMetadata && typeof videoMetadata === 'object' && 'size_bytes' in videoMetadata ? `${((videoMetadata as { size_bytes: number }).size_bytes / (1024 * 1024)).toFixed(2)} MB` : 'Unknown'}
+- Type: ${videoMetadata && typeof videoMetadata === 'object' && 'mime_type' in videoMetadata ? (videoMetadata as { mime_type: string }).mime_type : 'Video content'}
+- Status: ${videoMetadata && typeof videoMetadata === 'object' && 'state' in videoMetadata && typeof (videoMetadata as { state: unknown }).state === 'object' && (videoMetadata as { state: { name: string } }).state ? (videoMetadata as { state: { name: string } }).state.name : 'Processed'}
 
 Please provide a detailed analysis with the following structure:
 
@@ -147,11 +148,11 @@ Assess the technical presentation based on content structure:
 
 Provide specific, actionable insights that would be valuable for technical teams and developers.`;
 
-          const result = await this.model.generateContent([
+          const result = await (this.model as { generateContent: (content: string[]) => Promise<unknown> }).generateContent([
             analysisPrompt
           ]);
           
-          const response = await result.response;
+          const response = await (result as { response: { text: () => string } }).response;
           const analysis = response.text();
           
           return `${analysis}

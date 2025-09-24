@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { ENV_VARS } from '@/common/config';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = ENV_VARS.GEMINI_API_KEY;
     
     if (!apiKey || apiKey === 'demo-key') {
       return NextResponse.json({

@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractVideoId, getVideoUrl, extractMainDomain, getVideoSize, getSizeInGB } from '@/lib/video-utils';
-import { MessageDecryptor } from '@/lib/crypto-utils';
 import { GeminiClient } from '@/lib/gemini-client';
-
-const VIDEO_LIMIT_MINUTES = 30;
-const STORAGE_LIMIT_GB = 20;
+import { VideoService } from '@/lib/video-service';
+import { DEFAULTS, ENV_VARS } from '@/common/config';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { url, cdnUrl, companyId, companymodel, agentExtraInfo } = body;
+    const { url, cdnUrl } = body;
 
     if (!url) {
       return NextResponse.json(
@@ -51,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     // Check storage limits (simplified)
     const totalStorageGB = sizeGB; // In real implementation, sum all stored files
-    if (totalStorageGB > STORAGE_LIMIT_GB) {
+    if (totalStorageGB > DEFAULTS.STORAGE_LIMIT_GB) {
       return NextResponse.json(
         { error: 'Storage limit exceeded. Please delete some files to free up space.' },
         { status: 507 }
@@ -59,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize Gemini client
-    const apiKey = process.env.GEMINI_API_KEY || 'demo-key';
+    const apiKey = ENV_VARS.GEMINI_API_KEY || 'demo-key';
     
     const geminiClient = new GeminiClient(apiKey);
     
@@ -68,8 +66,24 @@ export async function POST(request: NextRequest) {
     // console.log('File metadata:', fileMetadata);
 
     // Generate summary with video metadata
-    const summary = await geminiClient.analyzeVideo(fileMetadata.name, '', fileMetadata);
+    const summary = await geminiClient.analyzeVideo((fileMetadata as { name: string }).name, '', fileMetadata);
     // console.log('Summary:', summary);
+
+    // Store video analysis in database
+    const videoService = VideoService.getInstance();
+    const videoAnalysis = await videoService.createVideoAnalysis({
+      videoUrl: url,
+      videoType: 'loom',
+      fileName: (fileMetadata as { name: string }).name,
+      summary: summary,
+      fileSize: sizeGB,
+      metadata: {
+        ...(fileMetadata as Record<string, unknown>),
+        cdnUrl: videoUrl,
+        size: sizeGB,
+        platform: 'loom'
+      }
+    });
 
     return NextResponse.json({
       status: 200,
@@ -78,7 +92,8 @@ export async function POST(request: NextRequest) {
         fileMetadata,
         summary,
         videoUrl,
-        size: sizeGB
+        size: sizeGB,
+        videoAnalysisId: videoAnalysis._id
       }
     });
 
