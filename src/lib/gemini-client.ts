@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager, FileState } from '@google/generative-ai/server';
-import { ENV_VARS } from '../common/config';
+import { ENV_VARS, GEMINI_MODELS } from '../common/config';
 
 export class GeminiClient {
   private genAI: GoogleGenerativeAI;
@@ -9,7 +9,7 @@ export class GeminiClient {
 
   constructor(apiKey: string) {
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.model = this.genAI.getGenerativeModel({ model: GEMINI_MODELS.FLASH });
     this.fileManager = new GoogleAIFileManager(apiKey);
   }
 

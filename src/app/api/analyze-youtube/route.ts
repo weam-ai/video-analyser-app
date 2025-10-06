@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { VideoService } from '@/lib/video-service';
-import { ENV_VARS } from '@/common/config';
+import { ENV_VARS, GEMINI_MODELS } from '@/common/config';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(ENV_VARS.GOOGLE_API_KEY as string);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODELS.PRO });
 
     const prompt = "Please summarize the video in 3 sentences.";
 

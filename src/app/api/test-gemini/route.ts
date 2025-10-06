@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ENV_VARS } from '@/common/config';
+import { ENV_VARS, GEMINI_MODELS } from '@/common/config';
 
 export async function GET() {
   try {
@@ -16,7 +16,7 @@ export async function GET() {
 
     // Test the API key by making a simple request
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODELS.FLASH });
     
     const result = await model.generateContent('Hello, please respond with "API key is working" if you can read this.');
     const response = await result.response;

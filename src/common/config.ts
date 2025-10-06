@@ -22,6 +22,12 @@ export const ENV_VARS = {
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
 } as const;
 
+// Gemini AI model configuration
+export const GEMINI_MODELS = {
+  FLASH: 'gemini-2.5-flash',
+  PRO: 'gemini-2.5-pro',
+} as const;
+
 // Default values
 export const DEFAULTS = {
   DB_CONNECTION: 'mongodb+srv',
