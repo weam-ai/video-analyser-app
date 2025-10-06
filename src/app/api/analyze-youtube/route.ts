@@ -11,10 +11,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing videoUrl" }, { status: 400 });
     }
 
-    const genAI = new GoogleGenerativeAI(ENV_VARS.GOOGLE_API_KEY as string);
+    const apiKey = ENV_VARS.GEMINI_API_KEY;
+    if (!apiKey || apiKey === 'demo-key') {
+      return NextResponse.json({ error: "Gemini API key not configured" }, { status: 400 });
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: GEMINI_MODELS.PRO });
 
-    const prompt = "Please summarize the video in 3 sentences.";
+    const prompt = "Please summarize the video.";
 
     function cleanYoutubeUrl(url: string) {
         const urlObj = new URL(url);
