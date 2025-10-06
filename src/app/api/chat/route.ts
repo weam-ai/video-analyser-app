@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
 
     // Get video analysis
     const videoAnalysis = await videoService.getVideoAnalysis(videoAnalysisId);
+    console.log('Video analysis:', videoAnalysis);
     if (!videoAnalysis) {
       return NextResponse.json(
         { error: 'Video analysis not found' },
@@ -49,11 +50,25 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Generate AI response
+    // Generate AI response with video context
     const startTime = Date.now();
+    
+    // Create a context-aware prompt that includes the video summary
+    const contextualPrompt = `You are a helpful AI assistant that can answer questions about a video that has been analyzed. 
+
+VIDEO CONTEXT:
+- Video File: ${videoAnalysis.fileName}
+- Video Summary: ${videoAnalysis.summary}
+- Video Type: ${videoAnalysis.videoType}
+- Video URL: ${videoAnalysis.videoUrl}
+
+USER QUESTION: ${message}
+
+Please provide a helpful response based on the video content and summary above. If the user's question is related to the video, use the video summary to provide accurate information. If the question is not related to the video, you can still help but mention that you're answering based on general knowledge rather than the video content.`;
+
     const aiResponse = await geminiClient.analyzeVideo(
       videoAnalysis.fileName, 
-      message, 
+      contextualPrompt, 
       videoAnalysis.metadata
     );
     const responseTime = Date.now() - startTime;

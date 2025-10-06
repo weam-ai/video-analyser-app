@@ -79,7 +79,7 @@ export class ChatService {
     await sessionDb.updateOne(
       { sessionId },
       { 
-        $push: { messages: insertedMessage },
+        $push: { messages: insertedMessage } as any,
         $set: { updatedAt: now }
       }
     );

@@ -1,6 +1,6 @@
 import { connectToDatabase } from './database';
 import { VideoAnalysis } from './models';
-import { Collection } from 'mongodb';
+import { Collection, ObjectId } from 'mongodb';
 import { COLLECTION_NAMES } from '../common/config';
 
 export class VideoService {
@@ -42,7 +42,7 @@ export class VideoService {
     const db = await this.getDb();
     
     const result = await db.findOneAndUpdate(
-      { _id: id },
+      { _id: new ObjectId(id) } as any,
       { 
         $set: { 
           ...updates, 
@@ -52,12 +52,13 @@ export class VideoService {
       { returnDocument: 'after' }
     );
 
-    return result || null;
+    return result ? { ...result, _id: result._id.toString() } : null;
   }
 
   async getVideoAnalysis(id: string): Promise<VideoAnalysis | null> {
     const db = await this.getDb();
-    return await db.findOne({ _id: id });
+    const result = await db.findOne({ _id: new ObjectId(id) } as any);
+    return result ? { ...result, _id: result._id.toString() } : null;
   }
 
   async getVideoAnalysisByUrl(videoUrl: string): Promise<VideoAnalysis | null> {

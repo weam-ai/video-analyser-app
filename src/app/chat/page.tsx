@@ -55,7 +55,7 @@ export default function ChatPage() {
         setMessages([{
           id: '1',
           type: 'assistant',
-          content: `Here's the video summary:\n\n${videoSummary?.summary}`,
+          content: `I've analyzed your video "${videoSummary?.fileMetadata?.name || 'video'}" and I'm ready to answer any questions you have about it!\n\n**Video Summary:**\n${videoSummary?.summary}\n\nFeel free to ask me anything about the content, concepts, or details mentioned in the video.`,
           timestamp: new Date()
         }]);
       }
@@ -65,7 +65,7 @@ export default function ChatPage() {
       setMessages([{
         id: '1',
         type: 'assistant',
-        content: `Here's the video summary:\n\n${videoSummary?.summary}`,
+        content: `I've analyzed your video "${videoSummary?.fileMetadata?.name || 'video'}" and I'm ready to answer any questions you have about it!\n\n**Video Summary:**\n${videoSummary?.summary}\n\nFeel free to ask me anything about the content, concepts, or details mentioned in the video.`,
         timestamp: new Date()
       }]);
     }
@@ -88,7 +88,7 @@ export default function ChatPage() {
         setMessages([{
           id: '1',
           type: 'assistant',
-          content: `Here's the video summary:\n\n${summary.summary}`,
+          content: `I've analyzed your video "${summary.fileMetadata?.name || 'video'}" and I'm ready to answer any questions you have about it!\n\n**Video Summary:**\n${summary.summary}\n\nFeel free to ask me anything about the content, concepts, or details mentioned in the video.`,
           timestamp: new Date()
         }]);
       }

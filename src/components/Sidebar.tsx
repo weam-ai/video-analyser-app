@@ -16,6 +16,7 @@ interface VideoHistoryResponse {
     skip: number;
     hasMore: boolean;
   };
+  error?: string;
 }
 
 export default function Sidebar() {
