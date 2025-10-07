@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -35,6 +35,11 @@ export default function ChatPage() {
   const [videoSummary, setVideoSummary] = useState<VideoSummary | null>(null);
   const [fileName, setFileName] = useState<string>('');
   const [sessionId, setSessionId] = useState<string>('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   const loadChatMessages = useCallback(async (videoAnalysisId: string) => {
     try {
@@ -120,6 +125,11 @@ export default function ChatPage() {
       window.removeEventListener('videoChanged', handleVideoChange);
     };
   }, [loadVideoSummary]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || !videoSummary || !videoSummary.videoAnalysisId) return;
@@ -261,7 +271,7 @@ export default function ChatPage() {
             </Card>
 
             {/* Chat Messages */}
-            <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
+            <div className="space-y-4 mb-6 max-h-96 overflow-y-auto scroll-smooth">
               {isLoadingVideo ? (
                 <div className="flex justify-center items-center py-8">
                   <div className="flex items-center gap-2 text-gray-600">
@@ -330,6 +340,8 @@ export default function ChatPage() {
                   </div>
                 </div>
               )}
+              {/* Invisible element to scroll to */}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Input Area */}
