@@ -61,7 +61,7 @@ export function extractMainDomain(url: string): string {
     }
     
     return domain;
-  } catch (error) {
+  } catch {
     // Fallback: try to extract domain from string using regex
     const match = url.match(/https?:\/\/(?:www\.)?([^\/\?]+)/);
     if (match) {

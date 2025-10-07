@@ -5,11 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { Video, Upload, Loader2, CheckCircle, AlertCircle, Copy } from 'lucide-react';
+import { Video, Loader2, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface VideoAnalysisResult {
-  fileMetadata: any;
+  fileMetadata: {
+    name: string;
+    state?: { name: string };
+    [key: string]: unknown;
+  };
   summary: string;
   videoUrl: string;
   size: number;
@@ -23,9 +27,25 @@ export default function VideoAnalyzer() {
   const [customPrompt, setCustomPrompt] = useState('');
   const router = useRouter();
 
+  // Function to detect if URL is YouTube or Loom
+  const detectVideoType = (url: string) => {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      return 'youtube';
+    } else if (url.includes('loom.com')) {
+      return 'loom';
+    }
+    return null;
+  };
+
   const handleUpload = async () => {
     if (!videoUrl.trim()) {
-      setError('Please enter a Loom video URL');
+      setError('Please enter a Loom or YouTube video URL');
+      return;
+    }
+
+    const videoType = detectVideoType(videoUrl);
+    if (!videoType) {
+      setError('Please enter a valid Loom or YouTube video URL');
       return;
     }
 
@@ -34,29 +54,66 @@ export default function VideoAnalyzer() {
     setResult(null);
 
     try {
-      const response = await fetch('/api/upload-video', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: videoUrl,
-          companyId: 'default',
-          companymodel: 'default',
-          agentExtraInfo: {}
-        }),
-      });
+      let response;
+      let data;
 
-      const data = await response.json();
+      if (videoType === 'youtube') {
+        // Use analyze-youtube API for YouTube videos
+        response = await fetch('/api/analyze-youtube', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            videoUrl: videoUrl
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to upload video');
+        data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to analyze YouTube video');
+        }
+
+        // Transform YouTube response to match expected format
+        setResult({
+          fileMetadata: { name: 'YouTube Video', state: { name: 'Analyzed' } },
+          summary: data.summary,
+          videoUrl: videoUrl,
+          size: 0 // YouTube videos don't have file size
+        });
+      } else {
+        // Use upload-video API for Loom videos
+        response = await fetch('/api/upload-video', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: videoUrl,
+            companyId: 'default',
+            companymodel: 'default',
+            agentExtraInfo: {}
+          }),
+        });
+
+        data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to upload video');
+        }
+
+        setResult(data.data);
       }
-
-      setResult(data.data);
       
       // Store video summary in sessionStorage for chat
-      sessionStorage.setItem('videoSummary', JSON.stringify(data.data));
+      sessionStorage.setItem('videoSummary', JSON.stringify({
+        fileMetadata: { name: videoType === 'youtube' ? 'YouTube Video' : data.data?.fileMetadata?.name || 'Video' },
+        summary: videoType === 'youtube' ? data.summary : data.data?.summary,
+        videoUrl: videoUrl,
+        size: videoType === 'youtube' ? 0 : data.data?.size || 0,
+        videoAnalysisId: videoType === 'youtube' ? data.videoAnalysisId : data.data?.videoAnalysisId
+      }));
       
       // Automatically redirect to chat page after successful analysis
       setTimeout(() => {
@@ -114,35 +171,41 @@ export default function VideoAnalyzer() {
         <div className="space-y-4">
           <div>
             <label htmlFor="videoUrl" className="block text-sm font-medium text-gray-700 mb-2">
-              Loom Video URL
+              Video URL (Loom or YouTube)
             </label>
-            <Input
-              id="videoUrl"
-              type="url"
-              placeholder="https://www.loom.com/share/your-video-id"
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              className="w-full"
-            />
+            <div className="flex gap-3">
+              <Input
+                id="videoUrl"
+                type="url"
+                placeholder="https://www.loom.com/share/your-video-id or https://www.youtube.com/watch?v=..."
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                className="flex-1"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleUpload();
+                  }
+                }}
+              />
+              <Button
+                onClick={handleUpload}
+                disabled={isLoading}
+                className="bg-blue-600 hover:bg-blue-700 px-6"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Video className="mr-2 h-4 w-4" />
+                    Analyze Video
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-          
-          <Button
-            onClick={handleUpload}
-            disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing Video...
-              </>
-            ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                Upload & Analyze
-              </>
-            )}
-          </Button>
         </div>
       </Card>
 
@@ -166,11 +229,13 @@ export default function VideoAnalyzer() {
               🚀 Redirecting to chat page in a moment...
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              {result.size > 0 && (
+                <div>
+                  <span className="font-medium">File Size:</span> {result.size.toFixed(2)} GB
+                </div>
+              )}
               <div>
-                <span className="font-medium">File Size:</span> {result.size.toFixed(2)} GB
-              </div>
-              <div>
-                <span className="font-medium">Status:</span> {result.fileMetadata.state.name}
+                <span className="font-medium">Status:</span> {result.fileMetadata.state?.name || 'Analyzed'}
               </div>
             </div>
           </Card>
