@@ -40,16 +40,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Add user message to database
-    const userMessage = await chatService.addMessageToSession(chatSession.sessionId, {
-      messageId: `msg_${Date.now()}`,
-      type: 'user',
-      content: message,
-      metadata: {
-        prompt: message
-      }
-    });
-
     // Generate AI response with video context
     const startTime = Date.now();
     
@@ -73,11 +63,11 @@ Please provide a helpful response based on the video content and summary above. 
     );
     const responseTime = Date.now() - startTime;
 
-    // Add AI response to database
-    const assistantMessage = await chatService.addMessageToSession(chatSession.sessionId, {
-      messageId: `msg_${Date.now() + 1}`,
-      type: 'assistant',
-      content: aiResponse,
+    // Add single Q&A entry to database
+    const qaMessage = await chatService.addMessageToSession(chatSession.sessionId, {
+      messageId: `msg_${Date.now()}`,
+      question: message,
+      answer: aiResponse,
       metadata: {
         responseTime,
         videoAnalysisId
@@ -88,8 +78,7 @@ Please provide a helpful response based on the video content and summary above. 
       status: 200,
       message: 'Chat message processed successfully',
       data: {
-        userMessage,
-        assistantMessage,
+        qaMessage,
         sessionId: chatSession.sessionId
       }
     });

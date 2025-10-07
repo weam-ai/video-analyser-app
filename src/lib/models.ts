@@ -21,11 +21,10 @@ export interface ChatMessage {
   _id?: string;
   videoAnalysisId: string;
   messageId: string;
-  type: 'user' | 'assistant';
-  content: string;
+  question: string;
+  answer: string;
   timestamp: Date;
   metadata?: {
-    prompt?: string;
     responseTime?: number;
     [key: string]: unknown;
   };

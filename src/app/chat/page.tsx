@@ -10,8 +10,8 @@ import Sidebar from '@/components/Sidebar';
 
 interface ChatMessage {
   id: string;
-  type: 'user' | 'assistant';
-  content: string;
+  question: string;
+  answer: string;
   timestamp: Date;
 }
 
@@ -46,35 +46,38 @@ export default function ChatPage() {
       const response = await fetch(`/api/chat?videoAnalysisId=${videoAnalysisId}`);
       const data = await response.json();
       
+      // Always start with video analysis summary
+      const summaryMessage = {
+        id: 'video-summary',
+        question: '',
+        answer: `I've analyzed your video "${videoSummary?.fileMetadata?.name || 'video'}" and I'm ready to answer any questions you have about it!\n\n**Video Summary:**\n${videoSummary?.summary}\n\nFeel free to ask me anything about the content, concepts, or details mentioned in the video.`,
+        timestamp: new Date()
+      };
+
       if (response.ok && data.data.messages.length > 0) {
-        // Convert database messages to chat format
-        const chatMessages = data.data.messages.map((msg: { messageId: string; type: 'user' | 'assistant'; content: string; timestamp: string }) => ({
+        // Convert database messages to chat format and add after summary
+        const chatMessages = data.data.messages.map((msg: { messageId: string; question: string; answer: string; timestamp: string }) => ({
           id: msg.messageId,
-          type: msg.type,
-          content: msg.content,
+          question: msg.question,
+          answer: msg.answer,
           timestamp: new Date(msg.timestamp)
         }));
-        setMessages(chatMessages);
+        setMessages([summaryMessage, ...chatMessages]);
       } else {
-        // Add initial summary message if no existing chat
-        setMessages([{
-          id: '1',
-          type: 'assistant',
-          content: `I've analyzed your video "${videoSummary?.fileMetadata?.name || 'video'}" and I'm ready to answer any questions you have about it!\n\n**Video Summary:**\n${videoSummary?.summary}\n\nFeel free to ask me anything about the content, concepts, or details mentioned in the video.`,
-          timestamp: new Date()
-        }]);
+        // Only summary message if no existing chat
+        setMessages([summaryMessage]);
       }
     } catch (error) {
       console.error('Error loading chat messages:', error);
       // Fallback to initial summary message
       setMessages([{
-        id: '1',
-        type: 'assistant',
-        content: `I've analyzed your video "${videoSummary?.fileMetadata?.name || 'video'}" and I'm ready to answer any questions you have about it!\n\n**Video Summary:**\n${videoSummary?.summary}\n\nFeel free to ask me anything about the content, concepts, or details mentioned in the video.`,
+        id: 'video-summary',
+        question: '',
+        answer: `I've analyzed your video "${videoSummary?.fileMetadata?.name || 'video'}" and I'm ready to answer any questions you have about it!\n\n**Video Summary:**\n${videoSummary?.summary}\n\nFeel free to ask me anything about the content, concepts, or details mentioned in the video.`,
         timestamp: new Date()
       }]);
     }
-  }, [videoSummary?.summary]);
+  }, [videoSummary?.summary, videoSummary?.fileMetadata?.name]);
 
   const loadVideoSummary = useCallback(async () => {
     const storedSummary = sessionStorage.getItem('videoSummary');
@@ -91,9 +94,9 @@ export default function ChatPage() {
       } else {
         // Add initial summary message if no existing chat
         setMessages([{
-          id: '1',
-          type: 'assistant',
-          content: `I've analyzed your video "${summary.fileMetadata?.name || 'video'}" and I'm ready to answer any questions you have about it!\n\n**Video Summary:**\n${summary.summary}\n\nFeel free to ask me anything about the content, concepts, or details mentioned in the video.`,
+          id: 'video-summary',
+          question: '',
+          answer: `I've analyzed your video "${summary.fileMetadata?.name || 'video'}" and I'm ready to answer any questions you have about it!\n\n**Video Summary:**\n${summary.summary}\n\nFeel free to ask me anything about the content, concepts, or details mentioned in the video.`,
           timestamp: new Date()
         }]);
       }
@@ -134,16 +137,20 @@ export default function ChatPage() {
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || !videoSummary || !videoSummary.videoAnalysisId) return;
 
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: inputMessage,
+    const currentMessage = inputMessage;
+    const tempId = `temp_${Date.now()}`;
+    setInputMessage('');
+    setIsLoading(true);
+
+    // Add question immediately with empty answer (shows loading state)
+    const tempMessage: ChatMessage = {
+      id: tempId,
+      question: currentMessage,
+      answer: '',
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsLoading(true);
+    setMessages(prev => [...prev, tempMessage]);
 
     try {
       const response = await fetch('/api/chat', {
@@ -152,7 +159,7 @@ export default function ChatPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: inputMessage,
+          message: currentMessage,
           videoAnalysisId: videoSummary.videoAnalysisId,
           sessionId: sessionId,
           videoUrl: videoSummary.videoUrl,
@@ -168,23 +175,29 @@ export default function ChatPage() {
         throw new Error(data.error || 'Failed to get response');
       }
 
-      // Add both user and assistant messages from the response
-      const assistantMessage: ChatMessage = {
-        id: data.data.assistantMessage.messageId,
-        type: 'assistant',
-        content: data.data.assistantMessage.content,
-        timestamp: new Date(data.data.assistantMessage.timestamp)
+      // Update the temporary message with the actual Q&A data
+      const qaMessage: ChatMessage = {
+        id: data.data.qaMessage.messageId,
+        question: data.data.qaMessage.question,
+        answer: data.data.qaMessage.answer,
+        timestamp: new Date(data.data.qaMessage.timestamp)
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => prev.map(msg => 
+        msg.id === tempId ? qaMessage : msg
+      ));
     } catch (error) {
+      // Update the temporary message with error
       const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        id: tempId,
+        question: currentMessage,
+        answer: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, errorMessage]);
+
+      setMessages(prev => prev.map(msg => 
+        msg.id === tempId ? errorMessage : msg
+      ));
     } finally {
       setIsLoading(false);
     }
@@ -281,64 +294,67 @@ export default function ChatPage() {
                 </div>
               ) : (
                 messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`flex items-start gap-3 max-w-[80%] ${
-                      message.type === 'user' ? 'flex-row-reverse' : 'flex-row'
-                    }`}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        message.type === 'user'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-600'
-                      }`}
-                    >
-                      {message.type === 'user' ? (
-                        <User className="h-4 w-4" />
-                      ) : (
-                        <Bot className="h-4 w-4" />
-                      )}
+                <div key={message.id} className="space-y-3">
+                  {/* Video Summary Message - Special styling */}
+                  {message.id === 'video-summary' ? (
+                    <div className="flex justify-center">
+                      <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 max-w-[90%]">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Video className="h-5 w-5 text-blue-600" />
+                          <span className="font-semibold text-blue-800">Video Analysis Complete</span>
+                        </div>
+                        <div className="whitespace-pre-wrap text-sm text-gray-700">
+                          {message.answer}
+                        </div>
+                      </Card>
                     </div>
-                    <Card
-                      className={`p-4 ${
-                        message.type === 'user'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white'
-                      }`}
-                    >
-                      <div className="whitespace-pre-wrap text-sm">
-                        {message.content}
+                  ) : (
+                    <>
+                      {/* Question */}
+                      {message.question && (
+                        <div className="flex justify-end">
+                          <div className="flex items-start gap-3 max-w-[80%] flex-row-reverse">
+                            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                              <User className="h-4 w-4" />
+                            </div>
+                            <Card className="p-4 bg-blue-600 text-white">
+                              <div className="whitespace-pre-wrap text-sm">
+                                {message.question}
+                              </div>
+                            </Card>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Answer */}
+                      <div className="flex justify-start">
+                        <div className="flex items-start gap-3 max-w-[80%] flex-row">
+                          <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center">
+                            <Bot className="h-4 w-4" />
+                          </div>
+                          <Card className="p-4 bg-white">
+                            {message.answer ? (
+                              <>
+                                <div className="whitespace-pre-wrap text-sm">
+                                  {message.answer}
+                                </div>
+                                <div className="text-xs mt-2 text-gray-500">
+                                  {message.timestamp.toLocaleTimeString()}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                <span className="text-sm text-gray-600">Thinking...</span>
+                              </div>
+                            )}
+                          </Card>
+                        </div>
                       </div>
-                      <div
-                        className={`text-xs mt-2 ${
-                          message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
-                        }`}
-                      >
-                        {message.timestamp.toLocaleTimeString()}
-                      </div>
-                    </Card>
-                  </div>
+                    </>
+                  )}
                 </div>
                 ))
-              )}
-              {isLoading && !isLoadingVideo && (
-                <div className="flex justify-start">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center">
-                      <Bot className="h-4 w-4" />
-                    </div>
-                    <Card className="p-4 bg-white">
-                      <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                        <span className="text-sm text-gray-600">Thinking...</span>
-                      </div>
-                    </Card>
-                  </div>
-                </div>
               )}
               {/* Invisible element to scroll to */}
               <div ref={messagesEndRef} />
