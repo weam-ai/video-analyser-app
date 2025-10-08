@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Video, Clock, RefreshCw, Loader2 } from 'lucide-react';
+import { Video, Clock, RefreshCw, Loader2, Trash2 } from 'lucide-react';
 import { VideoAnalysis } from '@/lib/models';
 import { useRouter } from 'next/navigation';
 
@@ -30,6 +30,7 @@ export default function Sidebar() {
     hasMore: false
   });
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
   const router = useRouter();
 
   const fetchHistory = async (skip = 0, append = false) => {
@@ -100,6 +101,49 @@ export default function Sidebar() {
 
   const getVideoTypeIcon = (videoType: string) => {
     return videoType === 'youtube' ? '🎥' : '📹';
+  };
+
+  const handleDeleteVideo = async (videoId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering the card click
+    
+    if (!confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setDeletingVideoId(videoId);
+      
+      const response = await fetch(`/api/video-history?id=${videoId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete video');
+      }
+
+      // Remove the video from the local state
+      setHistories(prev => prev.filter(history => history._id !== videoId));
+      
+      // Update pagination total
+      setPagination(prev => ({
+        ...prev,
+        total: prev.total - 1
+      }));
+
+      // If the deleted video was selected, clear the selection
+      if (selectedVideoId === videoId) {
+        setSelectedVideoId(null);
+        sessionStorage.removeItem('videoSummary');
+      }
+
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      setError(error instanceof Error ? error.message : 'Failed to delete video');
+    } finally {
+      setDeletingVideoId(null);
+    }
   };
 
   useEffect(() => {
@@ -208,6 +252,19 @@ export default function Sidebar() {
                           </div>
                         </div>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => handleDeleteVideo(history._id!, e)}
+                      disabled={deletingVideoId === history._id}
+                      className="ml-2 p-1 h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      {deletingVideoId === history._id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3 w-3" />
+                      )}
+                    </Button>
                   </div>
                   
                   {history.metadata?.duration && (
