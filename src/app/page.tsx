@@ -39,7 +39,7 @@ export default function Home() {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
-                <Video className="h-10 w-10 text-blue-600" />
+                <Video className="h-10 w-10 text-gray-900" />
                 Loom or Youtube Video Analyzer
               </h1>
               <p className="text-lg text-gray-600 mb-4">

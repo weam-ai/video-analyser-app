@@ -235,7 +235,7 @@ export default function VideoAnalyzer() {
                   value="default"
                   checked={promptType === 'default'}
                   onChange={(e) => setPromptType(e.target.value as 'default' | 'custom')}
-                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  className="mt-1 h-4 w-4 text-gray-900 focus:ring-gray-500 border-gray-300"
                 />
                 <div className="flex-1">
                   <label htmlFor="default-prompt" className="block text-sm font-medium text-gray-700 cursor-pointer">
@@ -263,7 +263,7 @@ export default function VideoAnalyzer() {
                   value="custom"
                   checked={promptType === 'custom'}
                   onChange={(e) => setPromptType(e.target.value as 'default' | 'custom')}
-                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  className="mt-1 h-4 w-4 text-gray-900 focus:ring-gray-500 border-gray-300"
                 />
                 <div className="flex-1">
                   <label htmlFor="custom-prompt" className="block text-sm font-medium text-gray-700 cursor-pointer">

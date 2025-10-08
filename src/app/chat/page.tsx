@@ -256,7 +256,7 @@ export default function ChatPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <MessageCircle className="h-8 w-8 text-blue-600" />
+                <MessageCircle className="h-8 w-8 text-gray-900" />
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">Video Chat</h1>
                   <p className="text-sm text-gray-600">Ask questions about your video</p>
@@ -274,7 +274,7 @@ export default function ChatPage() {
             <Card className="p-4 mb-6 bg-white/80">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Video className="h-5 w-5 text-blue-600" />
+                  <Video className="h-5 w-5 text-gray-900" />
                   <p className="font-medium text-gray-900">Video Analysis Complete</p>
                 </div>
                 <div className="text-sm text-gray-600">
@@ -302,8 +302,8 @@ export default function ChatPage() {
                     <div className="flex justify-center">
                       <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 max-w-[100%]">
                         <div className="flex items-center gap-2 mb-2">
-                          <Video className="h-5 w-5 text-blue-600" />
-                          <span className="font-semibold text-blue-800">Video Analysis Complete</span>
+                          <Video className="h-5 w-5 text-gray-900" />
+                          <span className="font-semibold text-black-800">Video Analysis Complete</span>
                         </div>
                         <div className="whitespace-pre-wrap text-sm text-gray-700">
                           {message.answer}
