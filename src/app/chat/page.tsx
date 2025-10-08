@@ -251,7 +251,7 @@ export default function ChatPage() {
         </div>
         
         {/* Main content area */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 pb-32">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
@@ -286,7 +286,7 @@ export default function ChatPage() {
             </Card>
 
             {/* Chat Messages */}
-            <div className="space-y-4 mb-6 max-h-96 overflow-y-auto scroll-smooth">
+            <div className="space-y-4 pb-32 overflow-y-auto scroll-smooth flex-1">
               {isLoadingVideo ? (
                 <div className="flex justify-center items-center py-8">
                   <div className="flex items-center gap-2 text-gray-600">
@@ -300,7 +300,7 @@ export default function ChatPage() {
                   {/* Video Summary Message - Special styling */}
                   {message.id === 'video-summary' ? (
                     <div className="flex justify-center">
-                      <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 max-w-[90%]">
+                      <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 max-w-[100%]">
                         <div className="flex items-center gap-2 mb-2">
                           <Video className="h-5 w-5 text-blue-600" />
                           <span className="font-semibold text-blue-800">Video Analysis Complete</span>
@@ -361,30 +361,32 @@ export default function ChatPage() {
               {/* Invisible element to scroll to */}
               <div ref={messagesEndRef} />
             </div>
+          </div>
+        </div>
 
-            {/* Input Area */}
-            <Card className="p-4 bg-white/80">
-              <div className="flex gap-3">
-                <Input
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Ask a question about the video..."
-                  className="flex-1"
-                  disabled={isLoading}
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!inputMessage.trim() || isLoading}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Press Enter to send, Shift+Enter for new line
-              </p>
-            </Card>
+        {/* Fixed Bottom Input Area */}
+        <div className="fixed bottom-0 left-80 right-0 bg-white border-t border-gray-200 p-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex gap-3">
+              <Input
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask a question about the video..."
+                className="flex-1"
+                disabled={isLoading}
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!inputMessage.trim() || isLoading}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Press Enter to send, Shift+Enter for new line
+            </p>
           </div>
         </div>
       </div>
