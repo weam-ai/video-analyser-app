@@ -1,6 +1,8 @@
+import { SESSION } from './config';
+
 const ironOption = {
-    cookieName: process.env.NEXT_PUBLIC_COOKIE_NAME || 'weam',
-    password: process.env.NEXT_PUBLIC_COOKIE_PASSWORD || 'eNfUm7mmU2tIrG7fl0zTmswH7ibarfLo',
+    cookieName: SESSION.COOKIE_NAME,
+    password: SESSION.COOKIE_PASSWORD,
     cookieOptions: {
         httpOnly: true,
         secure: false,

@@ -33,3 +33,8 @@ export const DEFAULTS = {
   DB_CONNECTION: 'mongodb+srv',
   STORAGE_LIMIT_GB: 20,
 } as const;
+
+export const SESSION = {
+  COOKIE_NAME: process.env.COOKIE_NAME || 'weam',
+  COOKIE_PASSWORD: process.env.COOKIE_PASSWORD,
+} as const;

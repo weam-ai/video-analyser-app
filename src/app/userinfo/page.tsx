@@ -1,10 +1,11 @@
 import { cookies } from 'next/headers';
 import { getSession } from '../../common/withSession';
+import { SESSION } from '@/common/config';
 
 export default async function CookieDisplayPage() {
   // Get the weam cookie using Next.js cookies
   const cookieStore = await cookies();
-  const weamCookie = cookieStore.get('weam');
+  const weamCookie = cookieStore.get(SESSION.COOKIE_NAME);
   
   const session = await getSession();
     if (session.user) {
