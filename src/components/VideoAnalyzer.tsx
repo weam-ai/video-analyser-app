@@ -25,6 +25,8 @@ export default function VideoAnalyzer() {
   const [result, setResult] = useState<VideoAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
+  const [promptType, setPromptType] = useState<'default' | 'custom'>('default');
+  const [customPromptInput, setCustomPromptInput] = useState('');
   const router = useRouter();
 
   // Function to detect if URL is YouTube or Loom
@@ -49,6 +51,12 @@ export default function VideoAnalyzer() {
       return;
     }
 
+    // Validate custom prompt if selected
+    if (promptType === 'custom' && !customPromptInput.trim()) {
+      setError('Please enter a custom prompt');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setResult(null);
@@ -56,6 +64,9 @@ export default function VideoAnalyzer() {
     try {
       let response;
       let data;
+
+      // Get the selected prompt
+      const selectedPrompt = promptType === 'custom' ? customPromptInput : 'exampple'; // Default prompt placeholder
 
       if (videoType === 'youtube') {
         // Use analyze-youtube API for YouTube videos
@@ -65,7 +76,8 @@ export default function VideoAnalyzer() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            videoUrl: videoUrl
+            videoUrl: videoUrl,
+            prompt: selectedPrompt
           }),
         });
 
@@ -93,7 +105,8 @@ export default function VideoAnalyzer() {
             url: videoUrl,
             companyId: 'default',
             companymodel: 'default',
-            agentExtraInfo: {}
+            agentExtraInfo: {},
+            prompt: selectedPrompt
           }),
         });
 
@@ -204,6 +217,74 @@ export default function VideoAnalyzer() {
                   </>
                 )}
               </Button>
+            </div>
+          </div>
+
+          {/* Prompt Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Select a Prompt
+            </label>
+            <div className="space-y-3">
+              {/* Default Prompt Option */}
+              <div className="flex items-start space-x-3">
+                <input
+                  type="radio"
+                  id="default-prompt"
+                  name="prompt-type"
+                  value="default"
+                  checked={promptType === 'default'}
+                  onChange={(e) => setPromptType(e.target.value as 'default' | 'custom')}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                />
+                <div className="flex-1">
+                  <label htmlFor="default-prompt" className="block text-sm font-medium text-gray-700 cursor-pointer">
+                    Default Prompt
+                  </label>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Use the default analysis prompt for comprehensive video summary
+                  </p>
+                  {promptType === 'default' && (
+                    <div className="mt-2 p-3 bg-gray-50 rounded-md border">
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Example default prompt:</span> "exampple" (placeholder to be replaced)
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Custom Prompt Option */}
+              <div className="flex items-start space-x-3">
+                <input
+                  type="radio"
+                  id="custom-prompt"
+                  name="prompt-type"
+                  value="custom"
+                  checked={promptType === 'custom'}
+                  onChange={(e) => setPromptType(e.target.value as 'default' | 'custom')}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                />
+                <div className="flex-1">
+                  <label htmlFor="custom-prompt" className="block text-sm font-medium text-gray-700 cursor-pointer">
+                    Custom Prompt
+                  </label>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Write your own prompt for specific analysis requirements
+                  </p>
+                  {promptType === 'custom' && (
+                    <div className="mt-2">
+                      <Textarea
+                        placeholder="Enter your custom prompt here..."
+                        value={customPromptInput}
+                        onChange={(e) => setCustomPromptInput(e.target.value)}
+                        className="w-full"
+                        rows={3}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

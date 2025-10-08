@@ -7,7 +7,7 @@ import { DEFAULTS, ENV_VARS } from '@/common/config';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { url, cdnUrl } = body;
+    const { url, cdnUrl, prompt } = body;
 
     if (!url) {
       return NextResponse.json(
@@ -65,8 +65,9 @@ export async function POST(request: NextRequest) {
     const fileMetadata = await geminiClient.uploadFile(videoUrl);
     // console.log('File metadata:', fileMetadata);
 
-    // Generate summary with video metadata
-    const summary = await geminiClient.analyzeVideo((fileMetadata as { name: string }).name, '', fileMetadata);
+    // Generate summary with video metadata using provided prompt or default
+    const analysisPrompt = prompt || ''; // Use provided prompt or empty string for default
+    const summary = await geminiClient.analyzeVideo((fileMetadata as { name: string }).name, analysisPrompt, fileMetadata);
     // console.log('Summary:', summary);
 
     // Store video analysis in database
