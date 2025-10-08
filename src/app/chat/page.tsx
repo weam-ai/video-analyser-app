@@ -229,7 +229,7 @@ export default function ChatPage() {
                   Please analyze a video first to start a chat session.
                 </p>
                 <Link href="/">
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Button>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Go Back to Video Analyzer
                   </Button>
@@ -379,7 +379,6 @@ export default function ChatPage() {
               <Button
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isLoading}
-                className="bg-blue-600 hover:bg-blue-700"
               >
                 <Send className="h-4 w-4" />
               </Button>

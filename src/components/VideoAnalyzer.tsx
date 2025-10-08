@@ -203,7 +203,7 @@ export default function VideoAnalyzer() {
               <Button
                 onClick={handleUpload}
                 disabled={isLoading}
-                className="bg-blue-600 hover:bg-blue-700 px-6"
+                className="px-6"
               >
                 {isLoading ? (
                   <>
@@ -244,13 +244,13 @@ export default function VideoAnalyzer() {
                   <p className="text-sm text-gray-500 mt-1">
                     Use the default analysis prompt for comprehensive video summary
                   </p>
-                  {promptType === 'default' && (
+                  {/* {promptType === 'default' && (
                     <div className="mt-2 p-3 bg-gray-50 rounded-md border">
                       <p className="text-sm text-gray-600">
                         <span className="font-medium">Example default prompt:</span> "exampple" (placeholder to be replaced)
                       </p>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
 
@@ -360,7 +360,6 @@ export default function VideoAnalyzer() {
               <Button
                 onClick={handleCustomAnalysis}
                 disabled={isLoading}
-                className="bg-indigo-600 hover:bg-indigo-700"
               >
                 {isLoading ? (
                   <>
