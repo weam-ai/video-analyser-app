@@ -199,4 +199,16 @@ Ensure nothing important is left out. The goal is to capture everything necessar
       return false;
     }
   }
+
+  async chatWithContext(prompt: string): Promise<string> {
+    try {
+      // Use text-only model for chat (no video file needed)
+      const result = await (this.model as { generateContent: (content: string) => Promise<unknown> }).generateContent(prompt);
+      const response = await (result as { response: { text: () => string } }).response;
+      return response.text();
+    } catch (error) {
+      console.error('Chat error:', error);
+      throw new Error(`Failed to generate chat response: ${error}`);
+    }
+  }
 }

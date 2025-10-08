@@ -27,15 +27,24 @@ export async function POST(request: NextRequest) {
       const existingAnalysis = await videoService.getVideoAnalysisByUrl(videoUrl);
       if (existingAnalysis) {
         videoAnalysisId = existingAnalysis._id!;
-        // Update existing analysis with custom analysis
-        result = await geminiClient.analyzeVideo(fileName, prompt, videoMetadata);
+        // Update existing analysis with custom analysis (using stored summary, video file already deleted)
+        const customPrompt = `Based on this video analysis, please answer the following request:
+
+VIDEO ANALYSIS:
+${existingAnalysis.summary || existingAnalysis.analysis}
+
+USER REQUEST: ${prompt}
+
+Please provide a detailed response based on the video analysis above.`;
+        
+        result = await geminiClient.chatWithContext(customPrompt);
         await videoService.updateVideoAnalysis(videoAnalysisId, {
           analysis: result,
           customPrompt: prompt
         });
       } else {
-        // Create new analysis if not found
-        result = await geminiClient.analyzeVideo(fileName, prompt, videoMetadata);
+        // Create new analysis if not found (this shouldn't happen, but handle it)
+        result = await geminiClient.chatWithContext(prompt);
         const newAnalysis = await videoService.createVideoAnalysis({
           videoUrl: videoUrl || '',
           videoType: videoType || 'loom',
@@ -62,6 +71,12 @@ export async function POST(request: NextRequest) {
         });
         videoAnalysisId = newAnalysis._id!;
       }
+    }
+
+    // Delete the video file from Gemini after analysis is complete
+    if (fileName) {
+      await geminiClient.deleteFile(fileName);
+      console.log(`Video removed from Gemini: ${fileName}`);
     }
 
     return NextResponse.json({

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
 import { VideoAnalysis } from '@/lib/models';
-import { COLLECTION_NAMES, ENV_VARS } from '@/common/config';
+import { COLLECTION_NAMES } from '@/common/config';
 import { ObjectId } from 'mongodb';
-import { GeminiClient } from '@/lib/gemini-client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -87,18 +86,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // If it's a Loom video, delete the file from Gemini as well
-    if (video.videoType === 'loom' && video.fileName) {
-      try {
-        const apiKey = ENV_VARS.GEMINI_API_KEY || 'demo-key';
-        const geminiClient = new GeminiClient(apiKey);
-        await geminiClient.deleteFile(video.fileName);
-        console.log(`Loom video file deleted from Gemini: ${video.fileName}`);
-      } catch (error) {
-        console.error('Failed to delete file from Gemini:', error);
-        // Don't fail the entire deletion if Gemini deletion fails
-      }
-    }
+    // Note: Video files are already deleted from Gemini after analysis completes
+    // No need to delete again here
+    console.log(`Video analysis deleted from database: ${video.fileName || video.videoUrl}`);
 
     return NextResponse.json({
       success: true,

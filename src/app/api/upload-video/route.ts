@@ -86,6 +86,11 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // Delete the video file from Gemini after analysis is complete
+    const fileName = (fileMetadata as { name: string }).name;
+    await geminiClient.deleteFile(fileName);
+    console.log(`Video removed from Gemini: ${fileName}`);
+
     return NextResponse.json({
       status: 200,
       message: 'Video uploaded and analyzed successfully',

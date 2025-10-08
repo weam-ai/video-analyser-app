@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate AI response with video context
+    // Generate AI response with video context (using stored analysis, not video file)
     const startTime = Date.now();
     
     // Create a context-aware prompt that includes the video summary
@@ -56,11 +56,8 @@ USER QUESTION: ${message}
 
 Please provide a helpful response based on the video content and summary above. If the user's question is related to the video, use the video summary to provide accurate information. If the question is not related to the video, you can still help but mention that you're answering based on general knowledge rather than the video content.`;
 
-    const aiResponse = await geminiClient.analyzeVideo(
-      videoAnalysis.fileName, 
-      contextualPrompt, 
-      videoAnalysis.metadata
-    );
+    // Use text-only chat (video file was deleted after initial analysis)
+    const aiResponse = await geminiClient.chatWithContext(contextualPrompt);
     const responseTime = Date.now() - startTime;
 
     // Add single Q&A entry to database
