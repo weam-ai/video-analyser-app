@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { VideoService } from '@/lib/video-service';
 import { ENV_VARS, GEMINI_MODELS } from '@/common/config';
+import { formatJsonToText } from '@/lib/text-formatter';
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
       },
     ]);
 
-    const summary = result.response.text();
+    const summary = formatJsonToText(result.response.text());
 
     // Store video analysis in database
     const videoService = VideoService.getInstance();
