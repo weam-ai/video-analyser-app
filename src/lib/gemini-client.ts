@@ -188,4 +188,15 @@ Ensure nothing important is left out. The goal is to capture everything necessar
     
     return this.analyzeVideo(fileName, prompt);
   }
+
+  async deleteFile(fileName: string): Promise<boolean> {
+    try {
+      await this.fileManager.deleteFile(fileName);
+      console.log(`File deleted from Gemini: ${fileName}`);
+      return true;
+    } catch (error) {
+      console.error('Error deleting file from Gemini:', error);
+      return false;
+    }
+  }
 }

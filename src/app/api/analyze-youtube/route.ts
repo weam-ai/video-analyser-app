@@ -5,7 +5,7 @@ import { ENV_VARS, GEMINI_MODELS } from '@/common/config';
 
 export async function POST(req: NextRequest) {
   try {
-    const { videoUrl } = await req.json();
+    const { videoUrl, prompt } = await req.json();
 
     if (!videoUrl) {
       return NextResponse.json({ error: "Missing videoUrl" }, { status: 400 });
@@ -19,7 +19,8 @@ export async function POST(req: NextRequest) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: GEMINI_MODELS.PRO });
 
-    const prompt = "Please summarize the video.";
+    // Use provided prompt or default prompt
+    const analysisPrompt = prompt || "Please summarize the video.";
 
     function cleanYoutubeUrl(url: string) {
         const urlObj = new URL(url);
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
     const cleanedUrl = cleanYoutubeUrl(videoUrl);
 
     const result = await model.generateContent([
-      prompt,
+      analysisPrompt,
       {
         fileData: {
           fileUri: cleanedUrl,

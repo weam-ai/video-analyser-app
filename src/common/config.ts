@@ -19,7 +19,7 @@ export const ENV_VARS = {
   DB_PASSWORD: process.env.DB_PASSWORD,
   DB_PORT: process.env.DB_PORT,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-  GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
+  // GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
 } as const;
 
 // Gemini AI model configuration
