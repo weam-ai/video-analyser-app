@@ -40,7 +40,7 @@ export default function Home() {
             <div className="text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
                 <Video className="h-10 w-10 text-blue-600" />
-                Loom Video Analyzer
+                Loom or Youtube Video Analyzer
               </h1>
               <p className="text-lg text-gray-600 mb-4">
                 Upload and analyze your Loom videos with AI-powered insights
