@@ -212,7 +212,7 @@ export default function ChatPage() {
 
   if (!videoSummary) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen bg-white">
         <div className="flex h-screen">
           {/* Sidebar */}
           <div className="w-80 flex-shrink-0">
@@ -243,7 +243,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-white">
       <div className="flex h-screen">
         {/* Sidebar */}
         <div className="w-80 flex-shrink-0">
@@ -300,7 +300,7 @@ export default function ChatPage() {
                   {/* Video Summary Message - Special styling */}
                   {message.id === 'video-summary' ? (
                     <div className="flex justify-center">
-                      <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 max-w-[100%]">
+                      <Card className="p-4 bg-white border-gray-200 max-w-[100%]">
                         <div className="flex items-center gap-2 mb-2">
                           <Video className="h-5 w-5 text-gray-900" />
                           <span className="font-semibold text-black-800">Video Analysis Complete</span>

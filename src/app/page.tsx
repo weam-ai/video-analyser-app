@@ -27,7 +27,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-white">
       <div className="flex h-screen">
         {/* Sidebar - Red highlighted area */}
         <div className="w-80 flex-shrink-0">
