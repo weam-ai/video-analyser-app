@@ -300,7 +300,7 @@ export default function ChatPage() {
                   {/* Video Summary Message - Special styling */}
                   {message.id === 'video-summary' ? (
                     <div className="flex justify-center">
-                      <Card className="p-4 bg-white border-gray-200 max-w-[100%]">
+                      <Card className="p-4 bg-white border-0 shadow-none max-w-[100%]">
                         <div className="flex items-center gap-2 mb-2">
                           <Video className="h-5 w-5 text-gray-900" />
                           <span className="font-semibold text-black-800">Video Analysis Complete</span>
@@ -316,10 +316,10 @@ export default function ChatPage() {
                       {message.question && (
                         <div className="flex justify-end">
                           <div className="flex items-start gap-3 max-w-[80%] flex-row-reverse">
-                            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center">
                               <User className="h-4 w-4" />
                             </div>
-                            <Card className="p-4 bg-blue-600 text-white">
+                            <Card className="p-4 bg-black text-white">
                               <div className="whitespace-pre-wrap text-sm">
                                 {message.question}
                               </div>
@@ -334,7 +334,7 @@ export default function ChatPage() {
                           <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center">
                             <Bot className="h-4 w-4" />
                           </div>
-                          <Card className="p-4 bg-white">
+                          <Card className="p-4 bg-white border-0 shadow-none">
                             {message.answer ? (
                               <>
                                 <div className="whitespace-pre-wrap text-sm">
